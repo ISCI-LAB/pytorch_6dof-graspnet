@@ -9,6 +9,7 @@ from utils import utils
 import glob
 from renderer.online_object_renderer import OnlineObjectRenderer
 import threading
+import h5py
 
 
 class NoPositiveGraspsException(Exception):
@@ -138,7 +139,7 @@ class BaseDataset(data.Dataset):
         return pos_grasps, pos_qualities, neg_grasps, neg_qualities, cad, cad_path, cad_scale
 
     def read_object_grasp_data(self,
-                               json_path,
+                               h5_path,
                                quality='quality_flex_object_in_gripper',
                                ratio_of_grasps_to_be_used=1.,
                                return_all_grasps=False):
@@ -152,23 +153,23 @@ class BaseDataset(data.Dataset):
         if num_clusters <= 0:
             raise NoPositiveGraspsException
 
-        json_dict = json.load(open(json_path))
-
-        object_model = Object(os.path.join(root_folder, json_dict['object']))
-        object_model.rescale(json_dict['object_scale'])
+        # json_dict = json.load(open(json_path))
+        h5_dict = h5py.File(h5_path, 'r')
+        object_model = Object(os.path.join(root_folder, h5_dict['/object/file'][()]))
+        object_model.rescale(h5_dict['/object/scale'][()])
         object_model = object_model.mesh
         object_mean = np.mean(object_model.vertices, 0, keepdims=1)
 
         object_model.vertices -= object_mean
-        grasps = np.asarray(json_dict['transforms'])
+        grasps = np.asarray(h5_dict['/grasps/transforms'])
         grasps[:, :3, 3] -= object_mean
 
-        flex_qualities = np.asarray(json_dict[quality])
-        try:
-            heuristic_qualities = np.asarray(
-                json_dict['quality_number_of_contacts'])
-        except KeyError:
-            heuristic_qualities = np.ones(flex_qualities.shape)
+        flex_qualities = np.asarray(h5_dict['/grasps/qualities/flex/object_in_gripper'])
+        # try:
+        #     heuristic_qualities = np.asarray(
+        #         h5_dict['quality_number_of_contacts'])
+        # except KeyError:
+        heuristic_qualities = np.ones(flex_qualities.shape)
 
         successful_mask = np.logical_and(flex_qualities > 0.01,
                                          heuristic_qualities > 0.01)
@@ -219,7 +220,7 @@ class BaseDataset(data.Dataset):
             num_positive_grasps = positive_grasps.shape[0]
             num_negative_grasps = negative_grasps.shape[0]
         return positive_grasps, positive_qualities, negative_grasps, negative_qualities, object_model, os.path.join(
-            root_folder, json_dict['object']), json_dict['object_scale']
+            root_folder, h5_dict['/object/file'][()]), h5_dict['/object/scale'][()]
 
     def sample_grasp_indexes(self, n, grasps, qualities):
         """

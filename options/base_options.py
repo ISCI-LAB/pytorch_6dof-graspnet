@@ -18,7 +18,7 @@ class BaseOptions:
             '--dataset_root_folder',
             type=str,
             default=
-            '/home/jens/Documents/datasets/grasping/unified_grasp_data/',
+            os.path.join(os.path.expanduser("~"), 'pytorch_6dof-graspnet/datasets/'),
             help='path to root directory of the dataset.')
         self.parser.add_argument('--num_objects_per_batch',
                                  type=int,

@@ -1,0 +1,6 @@
+*/__pycache__/
+datasets/grasps
+datasets/splits
+datasets/meshes
+*.pyc
+checkpoints
