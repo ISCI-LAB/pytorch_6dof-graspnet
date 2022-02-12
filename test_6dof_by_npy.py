@@ -10,21 +10,29 @@ import cv2
 import matplotlib.pyplot as plt
 from tqdm import tqdm, trange
 from PIL import Image
+import signal
+import sys
+import time
 ###
 import socket
 
 HOST = '127.0.0.1'
 PORT = 800
-
+def signal_handler(signum, frame):
+    print('signal_handler: caught signal ' + str(signum))
+    if signum == signal.SIGINT.value:
+        print('SIGINT')
+        
+        sys.exit(1)
 
 init(autoreset=True)
 
 def make_data(args):
     npy_path = []
     data_path = args.dataset_dir
-    print(args.All_data)
+    # print(args.All_data)
     
-    if False:
+    if True:
         print(Fore.YELLOW +"making All .npy dataset for testing")
         for i in glob.glob(os.path.join(data_path, '*.npy')):
             npy_path.append(i)
@@ -262,6 +270,7 @@ def display_inlier_outlier(cloud, ind):
 
 
 def main(args):
+    
     npy_arry = make_data(args) 
     npy_load = []   
     for i,item in enumerate(tqdm(npy_arry)):
@@ -296,7 +305,7 @@ def make_parser():
 
 
 if __name__ == "__main__":
-    
+    signal.signal(signal.SIGINT, signal_handler)
     parser = make_parser()
     args = parser.parse_args()
     print(args.All_data)
