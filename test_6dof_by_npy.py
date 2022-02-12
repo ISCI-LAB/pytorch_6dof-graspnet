@@ -10,15 +10,21 @@ import cv2
 import matplotlib.pyplot as plt
 from tqdm import tqdm, trange
 from PIL import Image
+###
+import socket
+
+HOST = '127.0.0.1'
+PORT = 800
 
 
 init(autoreset=True)
 
-
 def make_data(args):
     npy_path = []
     data_path = args.dataset_dir
-    if(args.All_data):
+    print(args.All_data)
+    
+    if False:
         print(Fore.YELLOW +"making All .npy dataset for testing")
         for i in glob.glob(os.path.join(data_path, '*.npy')):
             npy_path.append(i)
@@ -34,8 +40,20 @@ def make_data(args):
 
 def save_6dof_npy(args,partial):
     # print(args.npy_name)
-    np.save('/home/po/TM5/pytorch_6dof-graspnet/demo/data/6dof87',partial)
+    np.save('/home/po/TM5/pytorch_6dof-graspnet/demo/data/6dof',partial)
+    try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((HOST, PORT))
+        np.save('/home/po/TM5/pytorch_6dof-graspnet/demo/data/6dof',partial)
+        clientMessage = 'go predict!'
+        client.sendall(clientMessage.encode())
+        serverMessage = str(client.recv(1024)).encode("utf-8")
+        print('Server:', serverMessage)
 
+        client.close()
+    except Exception as inst:
+        print(Fore.RED+"SOCKET_ERROR")
+        print(inst)
 def show_img(img, bigger=False):
     if bigger:
         plt.figure(figsize=(15,15))
@@ -201,6 +219,7 @@ def visualize_segmentation(im, masks, nc=None, return_rgb=False, save_dir=None):
 
 def vis_open3d(npy,seg_num):
     ob1 = o3d.geometry.PointCloud()
+    np.save('/home/po/TM5/UnseenObjectClustering/BG',npy)
     seg_npy_dic = preprocess_data(npy,seg_num)
     color = seg_npy_dic['color'][...,::-1]
     ob1.points = o3d.utility.Vector3dVector(seg_npy_dic['xyz'])
@@ -280,5 +299,6 @@ if __name__ == "__main__":
     
     parser = make_parser()
     args = parser.parse_args()
+    print(args.All_data)
     main(args)
     # test_6dof(args)
