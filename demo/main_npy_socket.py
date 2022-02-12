@@ -15,7 +15,7 @@ import socket
 import signal
 import sys
 import time
-
+import gc
 HOST = '127.0.0.1'
 PORT = 800
 
@@ -215,6 +215,7 @@ def main(args):
                 serverMessage = 'I\'m here! I do'
                 conn.sendall(serverMessage.encode())
                 conn.close()
+                gc.collect()
 
 
 if __name__ == '__main__':
